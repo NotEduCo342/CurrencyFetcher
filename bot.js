@@ -1,5 +1,6 @@
 console.log("1. The Script Starts here....");
 const { Telegraf } = require("telegraf");
+const { Markup } = require("telegraf");
 
 require("dotenv").config();
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -86,15 +87,17 @@ bot.start((ctx) => {
   console.log(
     `[DEBUG] Received /start from ${ctx.from.username || ctx.from.first_name}`
   );
-  ctx.reply(`سلام ${ctx.from.first_name} به بات currncy fetcher خوش اومدی!😁`,
-    "لطفا ارز مورد نظرت رو انتخاب کن ",
-    Markup.inlineKeyboard([
-      [Markup.button.callback("💰 بیت کوین", "CURRENCY_1")],
-      [Markup.button.callback("💵 درهم دبی", "CURRENCY_2")],
-      [Markup.button.callback("💶 ربع سکه", "CURRENCY_3")],
-      [Markup.button.callback("💷 نیم سکه", "CURRENCY_4")],
-    ])
-  );
+ctx.reply(
+  `سلام ${ctx.from.first_name} به بات Currency Fetcher خوش اومدی! 😁\n\nلطفا ارز مورد نظرت رو انتخاب کن:`,
+  Markup.inlineKeyboard([
+    [Markup.button.callback("💰 بیت کوین", "CURRENCY_1")],
+    [Markup.button.callback("💵 درهم دبی", "CURRENCY_2")],
+    [Markup.button.callback("💶 ربع سکه", "CURRENCY_3")],
+    [Markup.button.callback("💷 نیم سکه", "CURRENCY_4")],
+  ])
+);
+
+
 });
 bot.action(/CURRENCY_\d/, async (ctx) => {
   const currencyCode = ctx.match[0];
@@ -107,12 +110,14 @@ bot.action(/CURRENCY_\d/, async (ctx) => {
 
   const currency = data[currencyCode];
 ctx.reply(
-  `💸 اطلاعات مربوط به **${currency.name}**:\n\n` +
-  `📍 **قیمت:** ${currency.value} تومان\n` +
-  `📊 **تغییرات:** ${currency.change} تومان\n` +
-  `📅 **تاریخ:** ${currency.date}\n` +
-  `\n━━━━━━━━━━━━━━━`
+  `💸 اطلاعات مربوط به *${currency.name}*:\n\n` +
+  `📍 *قیمت:* ${currency.value} تومان\n` +
+  `📊 *تغییرات:* ${currency.change} تومان\n` +
+  `📅 *تاریخ:* ${currency.date}\n` +
+  `\n━━━━━━━━━━━━━━━`,
+  { parse_mode: "Markdown" }
 );
+
 
 });
 
