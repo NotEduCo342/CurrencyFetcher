@@ -86,8 +86,7 @@ bot.start((ctx) => {
   console.log(
     `[DEBUG] Received /start from ${ctx.from.username || ctx.from.first_name}`
   );
-  ctx.reply(`سلام ${ctx.from.first_name} به بات currncy fetcher خوش اومدی!😁`);
-  ctx.reply(
+  ctx.reply(`سلام ${ctx.from.first_name} به بات currncy fetcher خوش اومدی!😁`,
     "لطفا ارز مورد نظرت رو انتخاب کن ",
     Markup.inlineKeyboard([
       [Markup.button.callback("💰 بیت کوین", "CURRENCY_1")],
