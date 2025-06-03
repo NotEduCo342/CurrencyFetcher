@@ -51,15 +51,21 @@ async function fetchNavasanData() {
     console.log(`[API_CALL] fetchNavasanData: Received response with status ${response.status}.`);
 
     const allData = response.data;
-    console.log("[API_CALL] fetchNavasanData: Raw data received from API:");
-    console.log(JSON.stringify(allData, null, 2));
+    // console.log("[API_CALL] fetchNavasanData: Raw data received from API:"); // Commented out for brevity
+    // console.log(JSON.stringify(allData, null, 2)); // Commented out for brevity
+    if (allData) {
+        console.log("[API_CALL] fetchNavasanData: Successfully received raw data from API (keys: " + Object.keys(allData).join(", ") + ").");
+    } else {
+        console.warn("[API_CALL] fetchNavasanData: Received no data or undefined data from API.");
+    }
+
 
     const extractedData = {};
     console.log("[API_CALL] fetchNavasanData: Processing items to extract relevant data...");
 
     for (const [code, { key, label }] of Object.entries(ITEMS_TO_FETCH)) {
       console.log(`[API_CALL] fetchNavasanData: Checking for item '${label}' (key: '${key}') in API response.`);
-      if (allData[key]) {
+      if (allData && allData[key]) { // Added null check for allData
         extractedData[code] = {
           name: label,
           value: parseFloat(allData[key].value).toLocaleString('fa-IR'), // Using 'fa-IR' for Persian number formatting
@@ -69,33 +75,27 @@ async function fetchNavasanData() {
         console.log(`[API_CALL] fetchNavasanData: Extracted data for '${label}':`, extractedData[code]);
       } else {
         extractedData[code] = null;
-        console.warn(`[API_CALL] fetchNavasanData: Item '${label}' (key: '${key}') not found in API response.`);
+        console.warn(`[API_CALL] fetchNavasanData: Item '${label}' (key: '${key}') not found or allData is null in API response.`);
       }
     }
 
     console.log("[API_CALL] fetchNavasanData: Successfully processed and extracted data:");
-    console.log(JSON.stringify(extractedData, null, 2));
+    console.log(JSON.stringify(extractedData, null, 2)); // Keep this for summary of extracted data
     return extractedData;
 
   } catch (error) {
     console.error("[API_CALL_ERROR] fetchNavasanData: An error occurred while fetching data.");
     if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
       console.error(`[API_CALL_ERROR] fetchNavasanData: Server responded with status ${error.response.status}.`);
-      console.error('[API_CALL_ERROR] fetchNavasanData: Response Data:', JSON.stringify(error.response.data, null, 2));
-      console.error('[API_CALL_ERROR] fetchNavasanData: Response Headers:', JSON.stringify(error.response.headers, null, 2));
+      console.error('[API_CALL_ERROR] fetchNavasanData: Response Data (summary):', error.response.data ? JSON.stringify(error.response.data).substring(0, 200) + "..." : "No data");
+      // console.error('[API_CALL_ERROR] fetchNavasanData: Response Headers:', JSON.stringify(error.response.headers, null, 2)); // Can be verbose
     } else if (error.request) {
-      // The request was made but no response was received
       console.error('[API_CALL_ERROR] fetchNavasanData: No response received from server (e.g., timeout or network issue).');
-      // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-      // http.ClientRequest in node.js
-      // console.error('[API_CALL_ERROR] fetchNavasanData: Request details:', error.request); // This can be very verbose
     } else {
-      // Something happened in setting up the request that triggered an Error
       console.error('[API_CALL_ERROR] fetchNavasanData: Error in request setup:', error.message);
     }
-    console.error('[API_CALL_ERROR] fetchNavasanData: Full error object:', error);
+    // console.error('[API_CALL_ERROR] fetchNavasanData: Full error object:', error); // Commented out for brevity
+    console.error(`[API_CALL_ERROR] fetchNavasanData: Error message: ${error.message}`);
     return null; // Return null to indicate failure
   }
 }
@@ -125,14 +125,13 @@ bot.start((ctx) => {
 // Action handler for currency buttons
 bot.action(/CURRENCY_(\d)/, async (ctx) => {
   const currencyCode = ctx.match[0]; // e.g., CURRENCY_1
-  const currencyNumber = ctx.match[1]; // e.g., 1
+  // const currencyNumber = ctx.match[1]; // e.g., 1 // Not used, can be removed if not needed
   const userInfo = ctx.from;
 
   console.log(
     `[BOT_EVENT] Received action '${currencyCode}' from user: ${userInfo.username || userInfo.first_name} (ID: ${userInfo.id})`
   );
 
-  // Answer callback query to remove the "loading" state on the button
   await ctx.answerCbQuery();
   console.log(`[BOT_EVENT] Answered callback query for action '${currencyCode}'.`);
 
@@ -154,7 +153,7 @@ bot.action(/CURRENCY_(\d)/, async (ctx) => {
 
   const currency = data[currencyCode];
   console.log(`[BOT_EVENT] Successfully fetched data for '${currency.name}'.`);
-  console.log(JSON.stringify(currency, null, 2));
+  console.log(JSON.stringify(currency, null, 2)); // Log specific currency data
 
   const replyMessage = `💸 اطلاعات مربوط به *${currency.name}*:\n\n` +
     `📍 *قیمت:* ${currency.value} تومان\n` +
@@ -163,7 +162,7 @@ bot.action(/CURRENCY_(\d)/, async (ctx) => {
     `\n━━━━━━━━━━━━━━━`;
 
   console.log(`[BOT_EVENT] Replying with currency info for '${currency.name}':`);
-  console.log(replyMessage);
+  // console.log(replyMessage); // The message content is already logged above with currency details
 
   ctx.reply(replyMessage, { parse_mode: "Markdown" });
 });
@@ -179,6 +178,21 @@ bot.help((ctx) => {
   ctx.reply(helpMessage);
 });
 
+// Generic text message handler for logging
+bot.on('text', (ctx) => {
+  const userInfo = ctx.from;
+  const messageText = ctx.message.text;
+  console.log(
+    `[USER_MESSAGE] Received text message from user: ${userInfo.username || userInfo.first_name} (ID: ${userInfo.id}): "${messageText}"`
+  );
+  // Optionally, you can add a default reply here if the bot doesn't understand the text.
+  // For now, it just logs the message.
+  // Example: if (!messageText.startsWith('/')) {
+  //   ctx.reply("پیام شما دریافت شد. برای دیدن دستورات موجود /start را بزنید.");
+  // }
+});
+
+
 // --- Bot Launch & Shutdown ---
 console.log("[MAIN] 4. Attempting to launch bot...");
 bot.launch()
@@ -186,7 +200,11 @@ bot.launch()
     console.log(
       "[MAIN] 5. Bot is running successfully using long polling. Go to Telegram and interact with your bot!"
     );
-    console.log(`[MAIN] Bot username: @${bot.botInfo.username}`);
+    if (bot.botInfo && bot.botInfo.username) {
+        console.log(`[MAIN] Bot username: @${bot.botInfo.username}`);
+    } else {
+        console.warn("[MAIN] Bot username could not be determined at this point.");
+    }
   })
   .catch((err) => {
     console.error("[MAIN_ERROR] Critical: Failed to launch bot.", err);
